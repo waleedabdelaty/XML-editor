@@ -363,13 +363,179 @@ namespace Xml_editor
 
 private void button6_Click(object sender, EventArgs e)
         {
-           
+            Compressor c = new Compressor();
+            List<string> xml_values = new List<string>();
+            string text = textBox1.Text.Replace(Environment.NewLine, @" \n "); // put text in one line
+            // get values from text
+            for (int i = 0; i < text.Length; i++)
+            {
+                if (text[i] == '>')
+                {
+                    int loc = text.IndexOf('<', i + 1, text.Length - i - 1);
+                    if (loc != -1 && text[loc + 1] == '/')
+                    {
+                        string value = text.Substring(i + 1, loc - i - 1);
+                        if (value[0] != 32) // not text or numbers
+                            xml_values.Add(value);
+                    }
+                }
+            }
+            Tree xml_tree = new Tree();
+            string x = "";
+            int counter = 0; // for lines
+            Stack<Node> s = new Stack<Node>();
+            string[] lines = textBox1.Text.Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
+            for (int j = 0; j < lines.Length; j++)
+            {
+                string line = lines[j];
+                for (int i = 0; i < line.Length; i++)
+                {
+                    string s1;
+                    if (line[i] == '<')
+                    {
+
+                        int loc = line.IndexOf('>', i + 1, line.Length - i - 1);
+                        if (loc != -1)
+                        {
+                            if (line[i + 1] == '/')
+                            {
+                                s1 = line.Substring(i + 2, loc - i - 2);
+
+                            }
+                            else
+                            {
+                                s1 = line.Substring(i + 1, loc - i - 1);
+                            }
+                            /////////////////////////////////////
+                            if (counter == 0)
+                            {
+
+                                string tag_name = s1;
+                                //string tag_value = line.Substring(loc, line.IndexOf('>', i + 1, line.Length - i - 1));
+                                string tag_value = "";
+                                Node r = new Node(c.compress(tag_name), c.compress(tag_value));
+                                xml_tree.root = r;
+                                s.Push(r);
+                            }
+                            else
+                            {
+                                //string modified_data = s1 + counter.ToString();
+                                //string temp = s1;
+                                string top = s.Peek().tag_name;
+                                int h = counter;
+                                string tag_name = s1; string tag_value = "";
+                                Node n = new Node(c.compress(tag_name), c.compress(tag_value));
+                                if (s.Count == 0 || c.compress(s1) != top)
+                                { xml_tree.add_node(n, s.Peek()); s.Push(n); }
+                                else s.Pop();
+                            }
+                        }
+                    }
+                }
+                counter++;
+            }
+            xml_tree.Tree_leaf_nodes(xml_tree.root);
+            List<Node> leaf_nodes = xml_tree.leaf_nodes;
+            for (int i = 0; i < xml_values.Count; i++)
+            {
+                xml_tree.leaf_nodes[i].tag_value = c.compress(xml_values[i]);
+            }
+            /*string compressed_xml = "";
+            for(int i=0;i<;i++)
+            {
+                g +=c.compress(xml_values[i])+Environment.NewLine;
+            }*/
+            
+            c.print_xml(xml_tree.root);
+            textBox1.Text =c.compress_result;
+            
 
         }
 
         private void button7_Click(object sender, EventArgs e)
         {
+            Compressor c = new Compressor();
+            List<string> xml_values = new List<string>();
+            string text = textBox1.Text.Replace(Environment.NewLine, @" \n "); // put text in one line
+            // get values from text
+            for (int i = 0; i < text.Length; i++)
+            {
+                if (text[i] == '>')
+                {
+                    int loc = text.IndexOf('<', i + 1, text.Length - i - 1);
+                    char ch = (char)65;
+                    if (loc != -1 && text[loc + 1] == '/')
+                    {
+                        string value = text.Substring(i + 1, loc - i-1);
+                        if (value[1]!=(char)92) // not text or numbers
+                            xml_values.Add(value);
+                    }
+                }
+            }
+            Tree xml_tree = new Tree();
+            string x = "";
+            int counter = 0; // for lines
+            Stack<Node> s = new Stack<Node>();
+            string[] lines = textBox1.Text.Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
+            for (int j = 0; j < lines.Length; j++)
+            {
+                string line = lines[j];
+                for (int i = 0; i < line.Length; i++)
+                {
+                    string s1;
+                    if (line[i] == '<')
+                    {
+
+                        int loc = line.IndexOf('>', i + 1, line.Length - i - 1);
+                        if (loc != -1)
+                        {
+                            if (line[i + 1] == '/')
+                            {
+                                s1 = line.Substring(i + 2, loc - i - 2);
+
+                            }
+                            else
+                            {
+                                s1 = line.Substring(i + 1, loc - i - 1);
+                            }
+                            /////////////////////////////////////
+                            if (counter == 0)
+                            {
+
+                                string tag_name = s1;
+                                //string tag_value = line.Substring(loc, line.IndexOf('>', i + 1, line.Length - i - 1));
+                                string tag_value = "";
+                                Node r = new Node(c.Decompress(tag_name), c.Decompress(tag_value));
+                                xml_tree.root = r;
+                                s.Push(r);
+                            }
+                            else
+                            {
+                                //string modified_data = s1 + counter.ToString();
+                                //string temp = s1;
+                                string top = s.Peek().tag_name;
+                                int h = counter;
+                                string tag_name = s1; string tag_value = "";
+                                Node n = new Node(c.Decompress(tag_name), c.Decompress(tag_value));
+                                if (s.Count == 0 || c.Decompress(s1) != top)
+                                { xml_tree.add_node(n, s.Peek()); s.Push(n); }
+                                else s.Pop();
+                            }
+                        }
+                    }
+                }
+                counter++;
+            }
+            xml_tree.Tree_leaf_nodes(xml_tree.root);
+            List<Node> leaf_nodes = xml_tree.leaf_nodes;
+            for (int i = 0; i < leaf_nodes.Count; i++)
+            {
+                xml_tree.leaf_nodes[i].tag_value = c.Decompress(xml_values[i]);
+            }
+            c.print_xml(xml_tree.root);
+            textBox1.Text = c.compress_result;
             
+           
             
             
 
