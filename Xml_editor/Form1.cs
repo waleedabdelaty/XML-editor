@@ -116,7 +116,7 @@ namespace Xml_editor
                     if (line[i] == '<')
                     {
 
-                        int loc = line.IndexOf('>', i + 1, line.Length - i - 1);
+                        int loc = line.IndexOf('>', i + 1, line.Length - i-1 );
                         if (loc != -1)
                         {
                             if (line[i + 1] == '/')
@@ -149,16 +149,16 @@ namespace Xml_editor
                     }
 
                 }
-                padding[counter + 1] = s.Count;
+                padding[counter +1] = s.Count;
                 counter++;
             }
-
+            
             for (int i = 0; i < lines.Length - 1; i++)
             {
                 lines[i] = lines[i].PadLeft(padding[i] + lines[i].Length, ' '); // add space to left of lines
                 lines[i] = lines[i].PadLeft(padding[i] + lines[i].Length, ' '); // add space to left of lines
                 lines[i] = lines[i].PadLeft(padding[i] + lines[i].Length, ' '); // add space to left of lines
-
+               
             }
             textBox1.Lines = lines;
         }
@@ -195,7 +195,7 @@ namespace Xml_editor
                                     string top = s.Peek();
                                     var original_top = Regex.Replace(top, @"[\d-]", string.Empty); //remove numbers from text
 
-                                    if (s.Count == 0 || s1 != original_top) s.Push(modified_data);
+                                    if (s.Count == 0||s1 != original_top) s.Push(modified_data);
                                     else s.Pop();
                                 }
 
@@ -261,29 +261,117 @@ namespace Xml_editor
 
         private void button5_Click(object sender, EventArgs e)
         {
-           
+            if (!check_error) { MessageBox.Show("Please check for errors first"); return; }
+            List<string> xml_values = new List<string>();
+            string text = textBox1.Text.Replace(Environment.NewLine, @" \n "); // put text in one line
+            // get values from text
+            for (int i = 0; i < text.Length; i++)
+            {
+                if (text[i] == '>')
+                {
+                    int loc = text.IndexOf('<', i + 1, text.Length - i - 1);
+                    if (loc != -1 && text[loc + 1] == '/')
+                    {
+                        string value = text.Substring(i + 1, loc - i - 1);
+                        if (value[0] != 32) // not text or numbers
+                            xml_values.Add(value);
+                    }
+                }
+            }
+            /*    for(int i=0;i<xml_values.Count;i++)
+                {
+                    textBox1.Text += Environment.NewLine + xml_values[i];
+                }*/
+            Tree xml_tree = new Tree();
+            string x = "";
+            int counter = 0; // for lines
+            Stack<Node> s = new Stack<Node>();
+            string[] lines = textBox1.Text.Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
+            for (int j = 0; j < lines.Length; j++)
+            {
+                string line = lines[j];
+                for (int i = 0; i < line.Length; i++)
+                {
+                    string s1;
+                    if (line[i] == '<')
+                    {
+
+                        int loc = line.IndexOf('>', i + 1, line.Length - i - 1);
+                        if (loc != -1)
+                        {
+                            if (line[i + 1] == '/')
+                            {
+                                s1 = line.Substring(i + 2, loc - i - 2);
+
+                            }
+                            else
+                            {
+                                s1 = line.Substring(i + 1, loc - i - 1);
+                            }
+                            /////////////////////////////////////
+                            if (counter == 0)
+                            {
+
+                                string tag_name = s1;
+                                //string tag_value = line.Substring(loc, line.IndexOf('>', i + 1, line.Length - i - 1));
+                                string tag_value = "";
+                                Node r = new Node(tag_name, tag_value);
+                                xml_tree.root = r;
+                                s.Push(r);
+                            }
+                            else
+                            {
+                                //string modified_data = s1 + counter.ToString();
+                                //string temp = s1;
+                                string top = s.Peek().tag_name;
+                                int h = counter;
+                                string tag_name = s1; string tag_value = "";
+                                Node n = new Node(tag_name, tag_value);
+                                if (s.Count == 0 || s1 != top)
+                                { xml_tree.add_node(n, s.Peek()); s.Push(n); }
+                                else s.Pop();
+                            }
+                        }
+                    }
+                }
+                counter++;
+            }
+            xml_tree.Tree_leaf_nodes(xml_tree.root);
+            List<Node> leaf_nodes = xml_tree.leaf_nodes;
+            xml_values.RemoveAt(xml_values.Count - 1);
+            for (int i = 0; i < xml_values.Count; i++)
+            {
+                xml_tree.leaf_nodes[i].tag_value = xml_values[i];
+            }
+            xml_tree.print_json(xml_tree.root, 1, -1, 1);
+            // xml_tree.print_json(xml_tree.root);
+            textBox1.Text = "{" + Environment.NewLine + xml_tree.json_result + Environment.NewLine + "}";
+            //string k = "";
+            /* for(int i=0;i<xml_values.Count;i++)
+             {
+                 k += xml_values[i] + " ";
+             }
+             textBox1.Text = k;*/
+
 
         }
 
 
 
+    
 
 
-
-        private void button6_Click(object sender, EventArgs e)
+private void button6_Click(object sender, EventArgs e)
         {
-            
-
+           
 
         }
 
         private void button7_Click(object sender, EventArgs e)
         {
-           
-
-
-
-
+            
+            
+            
 
         }
 
@@ -291,14 +379,11 @@ namespace Xml_editor
         {
 
 
-          
+            // textBox1.Text = textBox1.Text.Replace(" ", String.Empty);
+            textBox1.Text = Regex.Replace(textBox1.Text, @"\s+", " ");
+            //  StringBuilder sb = new StringBuilder(); foreach (string line in textBox1.Lines) { line.Replace(Environment.NewLine, ""); sb.Append(line); }
+            //  textBox1.Text = sb.ToString();
 
         }
-
-        private void button9_Click(object sender, EventArgs e)
-        {
-
-        }
-               
     }
-}
+    }
